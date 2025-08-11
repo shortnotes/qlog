@@ -1,336 +1,223 @@
-<!--
-github-pages-question-tracker.html
-Single-file GitHub Pages app to track repeatedly-wrong questions with notes.
-
-Instructions:
-- Edit CONFIG at top or open Settings in the app to set repoOwner/repoName/path and paste your GitHub PAT.
-- The app stores the token in localStorage (only) and uses GitHub REST API to create/update a JSON file at the configured path.
-- To deploy: push this file to the root of a GitHub repo's gh-pages branch or the default branch and enable GitHub Pages (or put into docs/ and enable pages).
-
-Security: Keep your PAT secret. Revoke it if compromised.
--->
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Question Tracker — GitHub Pages</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    /* Neumorphic-ish simple styles */
-    :root{--bg:#e8eef6;--card:#eef3fb;--shadow1: 8px 8px 16px rgba(163,177,198,0.35);--shadow2: -8px -8px 16px rgba(255,255,255,0.9)}
-    body{background:var(--bg);font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, 'Helvetica Neue', Arial;}
-    .neu{background:var(--card);border-radius:12px;padding:12px;box-shadow:var(--shadow1), var(--shadow2);}    
-    .small-muted{font-size:0.85rem;color:#5b6b7a}
-    .tag{display:inline-block;padding:4px 8px;border-radius:999px;font-size:0.8rem;background:#f5f8fc;margin-right:6px}
-    textarea{resize:vertical}
-    .clickable{cursor:pointer}
-    .mt-8{margin-top:2rem}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Question Tracker</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<style>
+    .dot { width: 20px; height: 20px; border-radius: 50%; display: inline-block; cursor: pointer; }
+    .dot-green { background-color: #28a745; }
+    .dot-red { background-color: #dc3545; }
+    .dot-yellow { background-color: #ffc107; }
+    .dot-gray { background-color: #6c757d; }
+    td.notes-cell { min-width: 150px; }
+</style>
 </head>
-<body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-transparent px-3 py-3">
-    <div class="container-fluid">
-      <a class="navbar-brand d-flex align-items-center" href="#">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15 8H9L12 2Z" fill="#3b82f6"/></svg>
-        <span class="ms-2">Question Tracker</span>
-      </a>
-      <div class="d-flex">
-        <button id="settingsBtn" class="btn btn-outline-secondary me-2">Settings</button>
-        <button id="syncBtn" class="btn btn-primary">Sync ↻</button>
-      </div>
-    </div>
-  </nav>
+<body class="bg-light">
 
-  <div class="container py-3">
-    <div class="row g-3">
-      <div class="col-12 col-md-4">
-        <div class="neu">
-          <h5>Hierarchy</h5>
-          <div class="small-muted">Add subjects, books, exams and questions</div>
-          <hr>
-          <div class="mb-2">
-            <input id="subjectInput" class="form-control mb-2" placeholder="New subject (e.g., Polity)">
-            <div class="d-grid gap-2 d-md-flex">
-              <button id="addSubjectBtn" class="btn btn-success btn-sm">Add Subject</button>
-            </div>
-          </div>
-          <div id="subjectsList" style="max-height:45vh;overflow:auto"></div>
+<div class="container py-4">
+    <h2 class="mb-4 text-center">📚 Question Tracker</h2>
+
+    <!-- Selectors -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Book</label>
+            <select id="bookSelect" class="form-select"></select>
         </div>
-      </div>
-
-      <div class="col-12 col-md-8">
-        <div class="neu">
-          <div class="d-flex justify-content-between align-items-start">
-            <div>
-              <h5 id="headingMain">Questions</h5>
-              <div class="small-muted">Select subject → book → exam to see questions</div>
-            </div>
-            <div class="text-end">
-              <div class="small-muted">Most mistaken filter</div>
-              <select id="filterMistake" class="form-select form-select-sm">
-                <option value="all">All</option>
-                <option value="mistakes">Mistaken > 0</option>
-                <option value="top5">Top 5 mistakes</option>
-              </select>
-            </div>
-          </div>
-
-          <hr>
-
-          <div id="controlsArea" class="mb-3">
-            <div class="row g-2">
-              <div class="col-6">
-                <input id="bookInput" class="form-control" placeholder="New book name">
-              </div>
-              <div class="col-6">
-                <input id="examInput" class="form-control" placeholder="New exam name">
-              </div>
-              <div class="col-12 d-flex mt-2">
-                <input id="questionText" class="form-control me-2" placeholder="Short question description or ID">
-                <button id="addQuestionBtn" class="btn btn-outline-primary">Add Question</button>
-              </div>
-            </div>
-          </div>
-
-          <div id="questionsArea"></div>
+        <div class="col-md-4">
+            <label class="form-label">Chapter</label>
+            <select id="chapterSelect" class="form-select"></select>
         </div>
-      </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button class="btn btn-primary w-100" id="loadChapter">Load</button>
+        </div>
     </div>
 
-    <div class="row mt-3">
-      <div class="col-12">
-        <div class="neu">
-          <h6>Activity / Help</h6>
-          <div id="activityLog" style="max-height:10rem;overflow:auto;font-size:0.9rem"></div>
-        </div>
-      </div>
+    <!-- Bulk Buttons -->
+    <div class="mb-3 d-none" id="bulkActions">
+        <button class="btn btn-success me-2" id="markAllCorrect">Mark All Correct</button>
+        <button class="btn btn-danger me-2" id="markAllWrong">Mark All Wrong</button>
+        <button class="btn btn-warning me-2" id="markAllNA">Mark All Not Attempted</button>
+        <button class="btn btn-secondary" id="newAttempt">➕ New Attempt</button>
     </div>
-  </div>
 
-  <!-- Settings modal (simple) -->
-  <div class="modal" tabindex="-1" id="settingsModal">
-    <div class="modal-dialog modal-lg">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Settings & GitHub Sync</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <div class="mb-2 small-muted">CONFIG (you can also edit the constants in the file)</div>
-          <div class="row g-2">
-            <div class="col-md-6">
-              <label class="form-label">GitHub Owner</label>
-              <input id="cfgOwner" class="form-control" placeholder="username or org">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Repository name</label>
-              <input id="cfgRepo" class="form-control" placeholder="repo-name">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Path for data file</label>
-              <input id="cfgPath" class="form-control" placeholder="data/questions.json">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Branch (default)</label>
-              <input id="cfgBranch" class="form-control" placeholder="main">
-            </div>
-            <div class="col-12 mt-2">
-              <label class="form-label">GitHub Personal Access Token (PAT)</label>
-              <input id="cfgToken" class="form-control" placeholder="Paste PAT here; stored in localStorage">
-              <div class="small-muted mt-1">Token required to create/update the JSON in your repo. Use fine-grained token or classic token with repo:contents permission. Revoke when not needed.</div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="loadRepoBtn" class="btn btn-outline-primary">Load from Repo</button>
-          <button id="initPushBtn" class="btn btn-outline-success">Init & Push (create file)</button>
-          <button id="saveSettingsBtn" class="btn btn-primary">Save</button>
-        </div>
-      </div>
+    <!-- Table -->
+    <div class="table-responsive">
+        <table class="table table-bordered" id="questionsTable">
+            <thead>
+                <tr>
+                    <th>Q#</th>
+                    <th>Notes</th>
+                    <th colspan="7" class="text-center">Last 7 Attempts</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
-  </div>
+</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // ========= CONFIG (you can edit here or in Settings modal) ========
-    const DEFAULT_CONFIG = {
-      owner: '', // e.g. 'shortnotes'
-      repo: '',  // e.g. 'qlog'
-      path: 'data/questions.json',
-      branch: 'main'
-    };
+<script>
+const GITHUB_USER = "YOUR_USERNAME";
+const GITHUB_REPO = "YOUR_REPO";
+const GITHUB_FILE = "data.json";
+const GITHUB_TOKEN = "YOUR_GITHUB_PAT";
+const API_URL = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/${GITHUB_FILE}`;
 
-    // ================ app state ==================
-    let state = { subjects: [] };
-    let current = { subject: null, book: null, exam: null };
-    const ACTIVITY = document.getElementById('activityLog');
+let data = { books: {} };
+let currentBook = "";
+let currentChapter = "";
 
-    // helpers
-    function logActivity(s){ const d = new Date().toLocaleString(); ACTIVITY.innerHTML = `<div>[${d}] ${s}</div>` + ACTIVITY.innerHTML; }
-    function saveLocal(){ localStorage.setItem('qtracker_data', JSON.stringify(state)); logActivity('Saved local'); }
-    function loadLocal(){ const raw = localStorage.getItem('qtracker_data'); if(raw){ try{ state = JSON.parse(raw); logActivity('Loaded local data'); }catch(e){ console.error(e); } } else { logActivity('No local data found'); }
-      renderSubjects(); renderQuestions(); }
-
-    // settings persistence
-    function saveSettingsToStorage(cfg){ localStorage.setItem('qtracker_cfg', JSON.stringify(cfg)); }
-    function loadSettingsFromStorage(){ const raw = localStorage.getItem('qtracker_cfg'); if(raw) return JSON.parse(raw); return DEFAULT_CONFIG; }
-
-    // render subjects
-    function renderSubjects(){ const el = document.getElementById('subjectsList'); el.innerHTML=''; state.subjects.forEach((s, si)=>{
-      const node = document.createElement('div'); node.className='mb-2 p-2 border rounded d-flex align-items-start justify-content-between';
-      node.innerHTML = `<div><strong class='clickable' data-sub='${si}'>${s.name}</strong><div class='small-muted'>${s.books?Object.keys(s.books).length:0} books</div></div>
-        <div><button class='btn btn-sm btn-outline-secondary me-1' data-sub-edit='${si}'>✎</button><button class='btn btn-sm btn-danger' data-sub-del='${si}'>🗑</button></div>`;
-      el.appendChild(node);
+// Load data from GitHub
+async function loadData() {
+    const res = await fetch(API_URL, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
     });
+    if (!res.ok) return;
+    const file = await res.json();
+    data = JSON.parse(atob(file.content));
+    populateSelectors();
+}
 
-      // attach listeners
-      el.querySelectorAll('[data-sub]').forEach(n=>n.addEventListener('click', (ev)=>{ const si = ev.target.dataset.sub; selectSubject(si); }));
-      el.querySelectorAll('[data-sub-edit]').forEach(n=>n.addEventListener('click',(ev)=>{ const i = ev.target.dataset.subEdit; const name = prompt('Rename subject', state.subjects[i].name); if(name){ state.subjects[i].name = name; saveLocal(); renderSubjects(); } }));
-      el.querySelectorAll('[data-sub-del]').forEach(n=>n.addEventListener('click',(ev)=>{ const i = ev.target.dataset.subDel; if(confirm('Delete subject and all its data?')){ state.subjects.splice(i,1); saveLocal(); renderSubjects(); renderQuestions(); } }));
-    }
-
-    function selectSubject(index){ current.subject = index; current.book = null; current.exam = null; renderQuestions(); document.getElementById('headingMain').innerText = 'Questions — ' + state.subjects[index].name; }
-
-    // add subject
-    document.getElementById('addSubjectBtn').addEventListener('click', ()=>{
-      const name = document.getElementById('subjectInput').value.trim(); if(!name) return alert('Enter subject name');
-      state.subjects.push({ name, books: {} }); document.getElementById('subjectInput').value=''; saveLocal(); renderSubjects(); logActivity('Added subject '+name);
+// Save data to GitHub
+async function saveData() {
+    const getRes = await fetch(API_URL, {
+        headers: { Authorization: `token ${GITHUB_TOKEN}` }
     });
+    const file = await getRes.json();
 
-    // add book/exam/question
-    document.getElementById('addQuestionBtn').addEventListener('click', ()=>{
-      if(current.subject===null) return alert('Select a subject first');
-      const book = document.getElementById('bookInput').value.trim(); const exam = document.getElementById('examInput').value.trim(); const qtxt = document.getElementById('questionText').value.trim();
-      if(!book || !exam || !qtxt) return alert('Fill book, exam and question');
-      const subj = state.subjects[current.subject]; subj.books[book] = subj.books[book] || {};
-      subj.books[book][exam] = subj.books[book][exam] || [];
-      subj.books[book][exam].push({id:Date.now(), text:qtxt, mistakes:1, notes:'', history:[{when:new Date().toISOString(), result:'wrong'}]});
-      document.getElementById('bookInput').value=''; document.getElementById('examInput').value=''; document.getElementById('questionText').value=''; saveLocal(); renderQuestions(); logActivity('Added question to '+book+' / '+exam);
+    await fetch(API_URL, {
+        method: "PUT",
+        headers: { Authorization: `token ${GITHUB_TOKEN}` },
+        body: JSON.stringify({
+            message: `Update ${currentBook} - ${currentChapter}`,
+            content: btoa(JSON.stringify(data, null, 2)),
+            sha: file.sha
+        })
     });
+}
 
-    // render questions area
-    function renderQuestions(){ const area = document.getElementById('questionsArea'); area.innerHTML = '';
-      if(current.subject===null) { area.innerHTML = '<div class="small-muted">Select a subject to start.</div>'; return; }
-      const subj = state.subjects[current.subject];
-      // show books as collapsible
-      for(const bookName of Object.keys(subj.books||{})){
-        const bookDiv = document.createElement('div'); bookDiv.className='mb-3';
-        bookDiv.innerHTML = `<div class='d-flex justify-content-between'><strong>${bookName}</strong><div class='small-muted'>${Object.keys(subj.books[bookName]).length} exams</div></div>`;
-        // exams list
-        const exams = subj.books[bookName];
-        const ul = document.createElement('div'); ul.className='mt-2';
-        for(const examName of Object.keys(exams)){
-          const qlist = exams[examName];
-          const qhtml = document.createElement('div'); qhtml.className='p-2 mb-2 border rounded';
-          qhtml.innerHTML = `<div class='d-flex justify-content-between'><div><strong>${examName}</strong><div class='small-muted'>${qlist.length} questions</div></div><div><button class='btn btn-sm btn-outline-secondary' data-exam-toggle='${bookName}||${examName}'>Open</button></div></div>`;
-          // details placeholder
-          const details = document.createElement('div'); details.style.display='none'; details.className='mt-2';
-          qlist.forEach((q, qi)=>{
-            const qnode = document.createElement('div'); qnode.className='mb-2 p-2 rounded';
-            qnode.innerHTML = `<div class='d-flex justify-content-between'><div><strong>${q.text}</strong><div class='small-muted'>mistakes: ${q.mistakes}</div></div>
-              <div><button class='btn btn-sm btn-outline-success me-1' data-q-mark='${bookName}||${examName}||${q.id}'>Mark Wrong</button><button class='btn btn-sm btn-outline-primary me-1' data-q-note='${bookName}||${examName}||${q.id}'>Notes</button><button class='btn btn-sm btn-danger' data-q-del='${bookName}||${examName}||${q.id}'>Delete</button></div></div>
-              <div class='small-muted mt-1'>${q.notes?('Notes: '+(q.notes.length>120?q.notes.slice(0,120)+'...':q.notes)):'No notes'}</div>`;
-            details.appendChild(qnode);
-          });
-          qhtml.appendChild(details);
-          ul.appendChild(qhtml);
+// Populate dropdowns
+function populateSelectors() {
+    const bookSelect = document.getElementById("bookSelect");
+    bookSelect.innerHTML = "";
+    Object.keys(data.books).forEach(book => {
+        bookSelect.innerHTML += `<option>${book}</option>`;
+    });
+    bookSelect.addEventListener("change", () => {
+        const chapterSelect = document.getElementById("chapterSelect");
+        chapterSelect.innerHTML = "";
+        const selectedBook = bookSelect.value;
+        Object.keys(data.books[selectedBook] || {}).forEach(chapter => {
+            chapterSelect.innerHTML += `<option>${chapter}</option>`;
+        });
+    });
+}
+
+// Load chapter table
+function loadChapterTable() {
+    const tableBody = document.querySelector("#questionsTable tbody");
+    tableBody.innerHTML = "";
+    document.getElementById("bulkActions").classList.remove("d-none");
+
+    const chapterData = data.books[currentBook][currentChapter];
+    const totalQuestions = chapterData.total_questions;
+    for (let i = 1; i <= totalQuestions; i++) {
+        if (!chapterData.questions[i]) {
+            chapterData.questions[i] = { notes: "", attempts: [] };
         }
-        bookDiv.appendChild(ul);
-        area.appendChild(bookDiv);
-      }
+        const q = chapterData.questions[i];
+        const row = document.createElement("tr");
 
-      // attach listeners
-      area.querySelectorAll('[data-exam-toggle]').forEach(n=>n.addEventListener('click', (ev)=>{
-        const key = ev.target.dataset.examToggle; const parts = key.split('||'); const book=parts[0], exam=parts[1];
-        const d = ev.target.closest('.p-2').querySelector('div.mt-2'); d.style.display = (d.style.display==='none')? 'block':'none';
-      }));
+        // Q#
+        const qCell = document.createElement("td");
+        qCell.textContent = i;
+        row.appendChild(qCell);
 
-      area.querySelectorAll('[data-q-mark]').forEach(n=>n.addEventListener('click', (ev)=>{
-        const parts = ev.target.dataset.qMark.split('||'); const book=parts[0], exam=parts[1], id=Number(parts[2]); markWrong(current.subject, book, exam, id);
-      }));
+        // Notes
+        const notesCell = document.createElement("td");
+        notesCell.classList.add("notes-cell");
+        notesCell.contentEditable = true;
+        notesCell.textContent = q.notes;
+        notesCell.addEventListener("input", () => {
+            q.notes = notesCell.textContent;
+            saveData();
+        });
+        row.appendChild(notesCell);
 
-      area.querySelectorAll('[data-q-note]').forEach(n=>n.addEventListener('click', (ev)=>{
-        const parts = ev.target.dataset.qNote.split('||'); const book=parts[0], exam=parts[1], id=Number(parts[2]); editNotes(current.subject, book, exam, id);
-      }));
+        // Attempts
+        for (let j = 0; j < 7; j++) {
+            const status = q.attempts[j] || "no_data";
+            const dot = document.createElement("span");
+            dot.classList.add("dot");
+            if (status === "correct") dot.classList.add("dot-green");
+            else if (status === "wrong") dot.classList.add("dot-red");
+            else if (status === "not_attempted") dot.classList.add("dot-yellow");
+            else dot.classList.add("dot-gray");
 
-      area.querySelectorAll('[data-q-del]').forEach(n=>n.addEventListener('click', (ev)=>{
-        const parts = ev.target.dataset.qDel.split('||'); const book=parts[0], exam=parts[1], id=Number(parts[2]); if(confirm('Delete question?')){ deleteQuestion(current.subject, book, exam, id); }
-      }));
+            dot.addEventListener("click", () => {
+                const states = ["correct", "wrong", "not_attempted", "no_data"];
+                let idx = states.indexOf(q.attempts[j] || "no_data");
+                idx = (idx + 1) % states.length;
+                q.attempts[j] = states[idx] === "no_data" ? undefined : states[idx];
+                saveData();
+                loadChapterTable();
+            });
+
+            const td = document.createElement("td");
+            td.appendChild(dot);
+            row.appendChild(td);
+        }
+
+        tableBody.appendChild(row);
     }
+}
 
-    function markWrong(sidx, book, exam, qid){ const subj = state.subjects[sidx]; const list = subj.books[book][exam]; const q = list.find(x=>x.id===qid); if(!q) return; q.mistakes = (q.mistakes||0) + 1; q.history = q.history||[]; q.history.push({when:new Date().toISOString(), result:'wrong'}); saveLocal(); renderQuestions(); logActivity('Marked wrong: '+q.text); }
-    function editNotes(sidx, book, exam, qid){ const subj = state.subjects[sidx]; const list = subj.books[book][exam]; const q = list.find(x=>x.id===qid); const newn = prompt('Edit notes', q.notes||''); if(newn!==null){ q.notes = newn; saveLocal(); renderQuestions(); logActivity('Updated notes for: '+q.text); } }
-    function deleteQuestion(sidx, book, exam, qid){ const subj = state.subjects[sidx]; const list = subj.books[book][exam]; const idx = list.findIndex(x=>x.id===qid); if(idx>=0){ list.splice(idx,1); saveLocal(); renderQuestions(); logActivity('Deleted question'); } }
+// Event Listeners
+document.getElementById("loadChapter").addEventListener("click", () => {
+    currentBook = document.getElementById("bookSelect").value;
+    currentChapter = document.getElementById("chapterSelect").value;
 
-    // ================ GitHub API sync ==================
-    function getCfg(){ const stored = loadSettingsFromStorage(); return stored; }
-    function setCfg(cfg){ saveSettingsToStorage(cfg); }
-
-    async function githubRequest(path, method='GET', body=null, token=null, extraHeaders={}){
-      const cfg = getCfg(); const base = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}`;
-      const url = base + path;
-      const headers = { 'Accept': 'application/vnd.github.v3+json', ...extraHeaders };
-      if(token) headers['Authorization'] = 'token ' + token;
-      const res = await fetch(url, { method, headers, body: body?JSON.stringify(body):undefined });
-      return res;
+    if (!data.books[currentBook]) data.books[currentBook] = {};
+    if (!data.books[currentBook][currentChapter]) {
+        const totalQ = parseInt(prompt("Enter total questions for this chapter:"));
+        data.books[currentBook][currentChapter] = { total_questions: totalQ, questions: {} };
+        saveData();
     }
+    loadChapterTable();
+});
 
-    async function loadFromRepo(){ const cfg = getCfg(); const token = localStorage.getItem('qtracker_token'); if(!cfg.owner||!cfg.repo||!cfg.path) return alert('Set owner/repo/path in Settings'); if(!token) return alert('Paste PAT in Settings and Save');
-      logActivity('Loading from repo...');
-      try{
-        const res = await githubRequest(`/contents/${encodeURIComponent(cfg.path)}?ref=${cfg.branch}`,'GET',null,token);
-        if(res.status===200){ const j = await res.json(); const content = atob(j.content.replace(/\n/g,'')); const parsed = JSON.parse(content); state = parsed; saveLocal(); renderSubjects(); renderQuestions(); logActivity('Loaded from repo (sha: '+j.sha+')');
-        } else if(res.status===404){ alert('File not found in repo. Use Init & Push to create it.'); logActivity('File not found in repo'); }
-        else { const txt=await res.text(); console.error(txt); alert('GitHub API error: ' + res.status); }
-      }catch(err){ console.error(err); alert('Failed to load: '+err.message); }
-    }
-
-    async function initAndPush(){ const cfg = getCfg(); const token = localStorage.getItem('qtracker_token'); if(!cfg.owner||!cfg.repo||!cfg.path) return alert('Set owner/repo/path in Settings'); if(!token) return alert('Paste PAT in Settings and Save');
-      // ensure state exists
-      if(!state || !state.subjects) state = { subjects: [] };
-      const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
-      const body = { message: 'Init questions.json by QTracker', content: content, branch: cfg.branch };
-      logActivity('Pushing initial file...');
-      try{
-        const res = await githubRequest(`/contents/${encodeURIComponent(cfg.path)}`,'PUT', body, token);
-        if(res.status===201 || res.status===200){ logActivity('File created/updated'); alert('Init success'); }
-        else { const txt = await res.text(); console.error(txt); alert('GitHub API error: '+res.status); }
-      }catch(err){ console.error(err); alert('Push failed: '+err.message); }
-    }
-
-    async function syncPush(){ const cfg = getCfg(); const token = localStorage.getItem('qtracker_token'); if(!cfg.owner||!cfg.repo||!cfg.path) return alert('Set owner/repo/path in Settings'); if(!token) return alert('Paste PAT in Settings and Save');
-      try{
-        // first get the file SHA if exists
-        const r = await githubRequest(`/contents/${encodeURIComponent(cfg.path)}?ref=${cfg.branch}`,'GET',null,token);
-        let sha = null;
-        if(r.status===200){ const j = await r.json(); sha = j.sha; }
-        const content = btoa(unescape(encodeURIComponent(JSON.stringify(state, null, 2))));
-        const body = { message: 'Update questions.json by QTracker', content: content, branch: cfg.branch };
-        if(sha) body.sha = sha;
-        const res = await githubRequest(`/contents/${encodeURIComponent(cfg.path)}`,'PUT', body, token);
-        if(res.status===201 || res.status===200){ logActivity('Synced to repo'); alert('Sync OK'); }
-        else { const txt = await res.text(); console.error(txt); alert('GitHub API error: '+res.status); }
-      }catch(err){ console.error(err); alert('Sync failed: '+err.message); }
-    }
-
-    // UI: settings modal wiring
-    const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
-    document.getElementById('settingsBtn').addEventListener('click', ()=>{
-      const cfg = loadSettingsFromStorage(); document.getElementById('cfgOwner').value = cfg.owner||''; document.getElementById('cfgRepo').value = cfg.repo||''; document.getElementById('cfgPath').value = cfg.path||'data/questions.json'; document.getElementById('cfgBranch').value = cfg.branch||'main'; document.getElementById('cfgToken').value = localStorage.getItem('qtracker_token')||''; settingsModal.show();
+document.getElementById("markAllCorrect").addEventListener("click", () => {
+    const chapterData = data.books[currentBook][currentChapter];
+    Object.values(chapterData.questions).forEach(q => q.attempts[0] = "correct");
+    saveData();
+    loadChapterTable();
+});
+document.getElementById("markAllWrong").addEventListener("click", () => {
+    const chapterData = data.books[currentBook][currentChapter];
+    Object.values(chapterData.questions).forEach(q => q.attempts[0] = "wrong");
+    saveData();
+    loadChapterTable();
+});
+document.getElementById("markAllNA").addEventListener("click", () => {
+    const chapterData = data.books[currentBook][currentChapter];
+    Object.values(chapterData.questions).forEach(q => q.attempts[0] = "not_attempted");
+    saveData();
+    loadChapterTable();
+});
+document.getElementById("newAttempt").addEventListener("click", () => {
+    const chapterData = data.books[currentBook][currentChapter];
+    Object.values(chapterData.questions).forEach(q => {
+        q.attempts.unshift(undefined);
+        if (q.attempts.length > 7) q.attempts.pop();
     });
-    document.getElementById('saveSettingsBtn').addEventListener('click', ()=>{
-      const cfg = { owner: document.getElementById('cfgOwner').value.trim(), repo: document.getElementById('cfgRepo').value.trim(), path: document.getElementById('cfgPath').value.trim(), branch: document.getElementById('cfgBranch').value.trim() || 'main' };
-      setCfg(cfg); const token = document.getElementById('cfgToken').value.trim(); if(token) localStorage.setItem('qtracker_token', token); settingsModal.hide(); logActivity('Settings saved');
-    });
-    document.getElementById('loadRepoBtn').addEventListener('click', ()=>{ settingsModal.hide(); loadFromRepo(); });
-    document.getElementById('initPushBtn').addEventListener('click', ()=>{ settingsModal.hide(); initAndPush(); });
+    saveData();
+    loadChapterTable();
+});
 
-    document.getElementById('syncBtn').addEventListener('click', ()=>{ saveLocal(); syncPush(); });
+// Init
+loadData();
+</script>
 
-    // initial load
-    loadLocal();
-
-  </script>
 </body>
 </html>
