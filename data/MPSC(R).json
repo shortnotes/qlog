@@ -30,6 +30,10 @@
             "3": {
               "notes": "",
               "attempts": [
+                "correct",
+                null,
+                null,
+                null,
                 "correct"
               ]
             },
@@ -176,5 +180,5 @@
       }
     }
   },
-  "__sha": "693a225152dd3b453d53b3362387155caeb6720e"
+  "__sha": "a67f74c8a79a85ab80359ad9cb81d91e7ecc233f"
 }
