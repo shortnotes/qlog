@@ -8,6 +8,11 @@
             "1": {
               "notes": "",
               "attempts": [
+                "correct",
+                null,
+                null,
+                null,
+                null,
                 "correct"
               ]
             },
@@ -166,5 +171,5 @@
       }
     }
   },
-  "__sha": "7d76c246912a28df0615e4429a6dbaf4d10f7377"
+  "__sha": "dfa4c64f190083abb556151aa86f7f5df61e6077"
 }
