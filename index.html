@@ -1,32 +1,19 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Question Tracker — GitHub Pages</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Q-Tee</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-<style>
-  body{background:#f5f7fb;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-  .dot{width:18px;height:18px;border-radius:50%;display:inline-block;cursor:pointer;margin:0 4px}
-  .dot-green{background:#28a745}
-  .dot-red{background:#dc3545}
-  .dot-yellow{background:#ffc107}
-  .dot-gray{background:#6c757d}
-  .notes-cell{min-width:220px;max-width:400px}
-  .sidebar{max-height:70vh;overflow:auto}
-  .table-wrap{max-height:70vh;overflow:auto}
-  pre.small{font-size:0.85rem}
-  .badge-small{font-size:0.75rem;padding:0.35em 0.45em}
-</style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg bg-white shadow-sm mb-3">
   <div class="container-fluid">
-    <a class="navbar-brand" href="#">Question Tracker</a>
+    <a class="navbar-brand" href="#">Q-Tee</a>
     <div class="d-flex gap-2">
       <button id="openSettings" class="btn btn-outline-secondary btn-sm">Settings</button>
-      <button id="exportBtn" class="btn btn-outline-primary btn-sm">Export</button>
       <button id="importBtn" class="btn btn-outline-success btn-sm">Import</button>
+      <button id="exportBtn" class="btn btn-outline-primary btn-sm">Export</button>
       <button id="syncBtn" class="btn btn-primary btn-sm">Sync ↻</button>
     </div>
   </div>
@@ -37,35 +24,52 @@
     <div class="col-lg-8">
       <div class="card shadow-sm">
         <div class="card-body">
+          <!-- Top selectors -->
           <div class="row g-2 align-items-end mb-2">
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label">Exam</label>
-              <select id="examSelect" class="form-select"></select>
+              <div class="input-group">
+                <select id="examSelect" class="form-select"></select>
+                <button id="btnAddExam" class="btn btn-outline-secondary">Add</button>
+              </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label">Subject</label>
-              <select id="subjectSelect" class="form-select"></select>
+              <div class="input-group">
+                <select id="subjectSelect" class="form-select"></select>
+                <button id="btnAddSubject" class="btn btn-outline-secondary">Add</button>
+              </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
               <label class="form-label">Book</label>
-              <select id="bookSelect" class="form-select"></select>
+              <div class="input-group">
+                <select id="bookSelect" class="form-select"></select>
+                <button id="btnAddBook" class="btn btn-outline-secondary">Add</button>
+              </div>
             </div>
-            <div class="col-md-6 mt-2">
+            <div class="col-md-3">
               <label class="form-label">Chapter</label>
-              <select id="chapterSelect" class="form-select"></select>
+              <div class="input-group">
+                <select id="chapterSelect" class="form-select"></select>
+                <button id="btnAddChapter" class="btn btn-outline-secondary">Add</button>
+              </div>
             </div>
-            <div class="col-md-6 mt-2 d-grid">
-              <button id="loadChapter" class="btn btn-primary">Load Chapter</button>
+
+            <div class="col-12 mt-2 d-grid">
+              <div class="d-flex gap-2">
+                <button id="loadChapter" class="btn btn-primary">Load Chapter</button>
+                <button id="markAllCorrect" class="btn btn-success">Mark All Correct</button>
+                <button id="markAllWrong" class="btn btn-danger">Mark All Wrong</button>
+                <button id="markAllNA" class="btn btn-warning">Mark All Not Attempted</button>
+                <button id="newAttempt" class="btn btn-secondary">➕ New Attempt</button>
+                <button id="showStatsBtn" class="btn btn-info ms-auto">Show Stats</button>
+              </div>
             </div>
           </div>
 
           <div id="controls" class="mb-2 d-none">
             <div class="d-flex gap-2 mb-2 flex-wrap">
-              <button id="markAllCorrect" class="btn btn-success btn-sm">Mark All Correct</button>
-              <button id="markAllWrong" class="btn btn-danger btn-sm">Mark All Wrong</button>
-              <button id="markAllNA" class="btn btn-warning btn-sm">Mark All Not Attempted</button>
-              <button id="newAttempt" class="btn btn-secondary btn-sm">➕ New Attempt</button>
-              <span id="chapterInfo" class="ms-auto small text-muted"></span>
+              <span id="chapterInfo" class="ms-auto muted-small"></span>
             </div>
           </div>
 
@@ -75,13 +79,13 @@
                 <tr>
                   <th style="width:64px">Q#</th>
                   <th>Notes</th>
-                  <th colspan="7" class="text-center">Last 7 Attempts (old → recent)</th>
+                  <th colspan="3" class="text-center">Last 3 Attempts (old → recent)</th>
                 </tr>
               </thead>
               <tbody></tbody>
             </table>
           </div>
-          <div id="saveHint" class="mt-2 small text-muted"></div>
+          <div id="saveHint" class="mt-2 muted-small"></div>
         </div>
       </div>
     </div>
@@ -89,26 +93,17 @@
     <div class="col-lg-4">
       <div class="card shadow-sm">
         <div class="card-body sidebar">
-          <h6>Live Stats</h6>
-          <div id="statsArea" class="mb-3 small-muted"></div>
+          <h6>Stats (click "Show Stats")</h6>
+          <div id="statsArea" class="mb-3 muted-small"></div>
           <hr>
-          <div>
-            <h6 class="mb-1">Chapter Accuracy</h6>
-            <div id="chapterStats" class="mb-3"></div>
-            <h6 class="mb-1">Subject Summary</h6>
-            <div id="subjectStats" class="mb-3"></div>
-            <h6 class="mb-1">Top 5 Chapters</h6>
-            <div id="top5" class="mb-3"></div>
-            <h6 class="mb-1">Bottom 5 Chapters</h6>
-            <div id="bottom5"></div>
-          </div>
+          <div id="statsDetails"></div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Settings modal -->
+<!-- Settings Modal -->
 <div class="modal" id="settingsModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -136,549 +131,40 @@
             <input id="cfgToken" class="form-control" placeholder="Paste PAT; stored in localStorage">
             <div class="form-text">Token needs repo contents permission. Revoke if compromised.</div>
           </div>
-          <div class="col-12">
+          <div class="col-12 mt-2">
             <hr>
             <button id="btnLoadExams" class="btn btn-outline-primary btn-sm">Load exams.json from repo</button>
             <button id="btnInitExams" class="btn btn-outline-success btn-sm">Init exams.json (create)</button>
             <button id="btnSaveSettings" class="btn btn-primary btn-sm">Save</button>
           </div>
         </div>
+
         <hr>
-        <div>
-          <strong>Notes</strong>
-          <pre class="small">Files:
+        <div><strong>Note</strong>
+          <pre class="small">Files used:
 data/exams.json  -> list of exam names
-data/<exam>.json -> per-exam storage (subjects -> books -> chapters -> questions)
-Each question stores full attempts array (oldest first). UI shows last 7 attempts only.</pre>
+data/{exam}.json -> per-exam storage (subjects -> books -> chapters -> questions)
+When saving, folder path is constructed as: {cfgPath}/{filename}.json (no nested .json mistakes).</pre>
         </div>
       </div>
     </div>
   </div>
 </div>
 
+<!-- Stats Modal -->
+<div class="modal" id="statsModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header"><h5 class="modal-title">Stats</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+      <div class="modal-body">
+        <div id="statsModalContent"></div>
+        <div class="mt-3"><button id="closeStats" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-/* -------------------------
-  App state & defaults
----------------------------*/
-const DEFAULT_CFG = { owner:'', repo:'', path:'data', branch:'main' };
-let cfg = loadCfg();
-let examsList = [];           // from data/exams.json
-let examData = null;          // loaded per exam
-let current = { exam:'', subject:'', book:'', chapter:'' };
-const lastN = 7;
-const saveDebounceMs = 900;
-let saveTimer = null;
-
-/* -------------------------
-  Helpers: storage & logging
----------------------------*/
-function log(msg){ const el = document.getElementById('saveHint'); el.textContent = msg; }
-function loadCfg(){
-  try{ const raw = localStorage.getItem('qtracker_cfg'); if(raw) return JSON.parse(raw); }
-  catch(e){}
-  return DEFAULT_CFG;
-}
-function saveCfgLocal(c){ localStorage.setItem('qtracker_cfg', JSON.stringify(c)); }
-
-/* -------------------------
-  GitHub API helpers
----------------------------*/
-function apiBase(){ return `https://api.github.com/repos/${cfg.owner}/${cfg.repo}`; }
-function fileUrl(path){ return `${apiBase()}/contents/${encodeURIComponent(path)}?ref=${cfg.branch}`; }
-
-async function ghGet(path){
-  const token = localStorage.getItem('qtracker_token');
-  if(!token) throw new Error('No token in localStorage (paste in Settings)');
-  const res = await fetch(fileUrl(path), { headers: { 'Authorization': 'token '+token, 'Accept':'application/vnd.github.v3+json' }});
-  return res;
-}
-
-async function ghPut(path, contentStr, message, sha=null){
-  const token = localStorage.getItem('qtracker_token');
-  if(!token) throw new Error('No token in localStorage (paste in Settings)');
-  const body = { message: message || 'Update by QTracker', content: btoa(unescape(encodeURIComponent(contentStr))), branch: cfg.branch };
-  if(sha) body.sha = sha;
-  const res = await fetch(apiBase() + '/contents/' + encodeURIComponent(path), {
-    method:'PUT',
-    headers: { 'Authorization': 'token '+token, 'Accept':'application/vnd.github.v3+json' },
-    body: JSON.stringify(body)
-  });
-  return res;
-}
-
-/* -------------------------
-  Exams list load / init
----------------------------*/
-async function loadExams(){
-  try{
-    const resp = await ghGet(cfg.path + '/exams.json');
-    if(resp.status===200){
-      const j = await resp.json();
-      const raw = atob(j.content.replace(/\n/g,'')); examsList = JSON.parse(raw).exams || [];
-      populateExamSelect();
-      log('Loaded exams.json');
-    } else {
-      log('exams.json not found in repo. Click Init to create one.');
-      examsList = [];
-      populateExamSelect();
-    }
-  }catch(err){ log('Load exams failed: '+err.message); consolesafe(err); }
-}
-
-async function initExams(){
-  try{
-    const content = JSON.stringify({ exams: [] }, null, 2);
-    const res = await ghPut(cfg.path + '/exams.json', content, 'Init exams.json');
-    if(res.ok) { log('Created exams.json'); loadExams(); }
-    else { const t = await res.text(); log('Init failed: '+res.status); console.log(t); }
-  }catch(err){ log('Init error: '+err.message); }
-}
-
-/* -------------------------
-  Per-exam load / save
----------------------------*/
-async function loadExamFile(examName){
-  try{
-    const resp = await ghGet(cfg.path + '/' + examName + '.json');
-    if(resp.status===200){
-      const j = await resp.json();
-      const raw = atob(j.content.replace(/\n/g,'')); examData = JSON.parse(raw);
-      examData.__sha = j.sha;
-      populateSelectorsFromData();
-      log('Loaded '+examName+'.json');
-    } else if(resp.status===404){
-      // no file exists
-      examData = { subjects: {} };
-      examData.__sha = null;
-      populateSelectorsFromData();
-      log('No file for exam. Initialized empty data.');
-    } else {
-      log('Error loading exam file: '+resp.status);
-    }
-  }catch(err){ log('Load exam failed: '+err.message); console.error(err); }
-}
-
-async function saveExamFile(msg='Save from QTracker'){
-  if(!current.exam) return log('Select exam first');
-  try{
-    const content = JSON.stringify(examData, null, 2);
-    const path = cfg.path + '/' + current.exam + '.json';
-    const res = await ghPut(path, content, msg, examData.__sha);
-    if(res.status===200 || res.status===201){
-      const j = await res.json();
-      examData.__sha = j.content.sha;
-      log('Saved '+current.exam+'.json');
-    } else {
-      const txt = await res.text(); console.error(txt);
-      log('Save failed: '+res.status);
-    }
-  }catch(err){ log('Save error: '+err.message); console.error(err); }
-}
-
-/* -------------------------
-  UI population
----------------------------*/
-function populateExamSelect(){
-  const el = document.getElementById('examSelect'); el.innerHTML = '';
-  const emptyOpt = document.createElement('option'); emptyOpt.text = '-- choose exam --'; el.appendChild(emptyOpt);
-  examsList.forEach(e=>{ const o = document.createElement('option'); o.text = e; el.appendChild(o); });
-}
-
-function populateSelectorsFromData(){
-  // subjects, books, chapters
-  const subjSel = document.getElementById('subjectSelect'); subjSel.innerHTML='';
-  const bookSel = document.getElementById('bookSelect'); bookSel.innerHTML='';
-  const chapSel = document.getElementById('chapterSelect'); chapSel.innerHTML='';
-  const subjects = Object.keys(examData.subjects || {});
-  const emptyOpt = document.createElement('option'); emptyOpt.text='-- subject --'; subjSel.appendChild(emptyOpt);
-  subjects.forEach(s => { const o=document.createElement('option'); o.text=s; subjSel.appendChild(o); });
-  subjSel.onchange = ()=>{
-    const s = subjSel.value;
-    bookSel.innerHTML = '';
-    const bEmpty = document.createElement('option'); bEmpty.text='-- book --'; bookSel.appendChild(bEmpty);
-    if(s && examData.subjects[s]) Object.keys(examData.subjects[s]).forEach(b=>{ const o=document.createElement('option'); o.text=b; bookSel.appendChild(o); });
-    chapSel.innerHTML = ''; const cEmpty=document.createElement('option'); cEmpty.text='-- chapter --'; chapSel.appendChild(cEmpty);
-  };
-  bookSel.onchange = ()=>{
-    const s = subjSel.value; const b = bookSel.value; chapSel.innerHTML=''; const cEmpty=document.createElement('option'); cEmpty.text='-- chapter --'; chapSel.appendChild(cEmpty);
-    if(s && b && examData.subjects[s] && examData.subjects[s][b]) Object.keys(examData.subjects[s][b]).forEach(c => { const o=document.createElement('option'); o.text=c; chapSel.appendChild(o); });
-  };
-  // add quick-create placeholders to allow user to add new subject/book/chapter on Load
-}
-
-/* -------------------------
-  Chapter loading & table render
----------------------------*/
-function ensureCurrentChapterStructure(){
-  if(!examData.subjects) examData.subjects = {};
-  if(!examData.subjects[current.subject]) examData.subjects[current.subject] = {};
-  if(!examData.subjects[current.subject][current.book]) examData.subjects[current.subject][current.book] = {};
-  if(!examData.subjects[current.subject][current.book][current.chapter]) {
-    // ask for total questions
-    let tq = prompt('Enter total number of questions for this chapter: (integer)');
-    if(!tq) { log('Chapter creation cancelled'); return false; }
-    tq = parseInt(tq);
-    if(isNaN(tq) || tq <= 0) { alert('Invalid number'); return false; }
-    examData.subjects[current.subject][current.book][current.chapter] = { totalQuestions: tq, questions: {} };
-    return true;
-  }
-  return true;
-}
-
-function lastNAttempts(arr){
-  if(!arr) return [];
-  const total = arr.slice(-lastN);
-  // ensure length lastN by prefilling with undefined at start if needed
-  const pad = Array(Math.max(0, lastN - total.length)).fill(undefined);
-  return pad.concat(total);
-}
-
-function renderTable(){
-  const tbody = document.querySelector('#questionsTable tbody'); tbody.innerHTML = '';
-  const controls = document.getElementById('controls');
-  if(!current.chapter){ controls.classList.add('d-none'); return; }
-  if(!ensureCurrentChapterStructure()) return;
-  const chapterObj = examData.subjects[current.subject][current.book][current.chapter];
-  const tq = chapterObj.totalQuestions || 0;
-  controls.classList.remove('d-none');
-  document.getElementById('chapterInfo').textContent = `Q: ${tq}  •  Exam: ${current.exam}`;
-
-  for(let i=1;i<=tq;i++){
-    const q = chapterObj.questions[i] || { notes:'', attempts:[] };
-    const tr = document.createElement('tr');
-
-    const tdNum = document.createElement('td'); tdNum.textContent = i; tr.appendChild(tdNum);
-
-    const tdNotes = document.createElement('td'); tdNotes.className='notes-cell';
-    const ta = document.createElement('textarea'); ta.className='form-control form-control-sm'; ta.style.minHeight='56px'; ta.value = q.notes || '';
-    // debounce save
-    let noteTimer = null;
-    ta.addEventListener('input', ()=> {
-      if(noteTimer) clearTimeout(noteTimer);
-      noteTimer = setTimeout(()=> {
-        chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-        chapterObj.questions[i].notes = ta.value;
-        scheduleAutoSave();
-        renderStats();
-      }, saveDebounceMs);
-    });
-    tdNotes.appendChild(ta);
-    tr.appendChild(tdNotes);
-
-    const arr = lastNAttempts(q.attempts || []);
-    arr.forEach((st, idx) => {
-      const td = document.createElement('td'); td.className='text-center';
-      const sp = document.createElement('span'); sp.className='dot';
-      const state = st || 'no_data';
-      if(state==='correct') sp.classList.add('dot-green');
-      else if(state==='wrong') sp.classList.add('dot-red');
-      else if(state==='not_attempted') sp.classList.add('dot-yellow');
-      else sp.classList.add('dot-gray');
-
-      sp.title = state;
-      sp.onclick = ()=>{
-        // toggle: no_data -> correct -> wrong -> not_attempted -> no_data
-        const states = ['no_data','correct','wrong','not_attempted'];
-        const curIdx = states.indexOf( ( (q.attempts||[]).slice(-lastN)[idx] ) || 'no_data' );
-        const next = states[(curIdx + 1) % states.length];
-        // compute absolute index into full attempts array: map idx into lastN tail
-        const full = q.attempts || [];
-        const tail = full.slice(-lastN);
-        const absolutePos = full.length - tail.length + idx;
-        if(next === 'no_data'){
-          // remove that attempt slot if exists by setting undefined at that position
-          if(absolutePos >=0 && full[absolutePos] !== undefined) { full[absolutePos] = undefined; }
-        } else {
-          // write (or extend) at absolutePos
-          if(absolutePos < 0){
-            // prepend to fill
-            const prependCount = -absolutePos;
-            for(let z=0; z<prependCount; z++) full.unshift(undefined);
-          }
-          full[absolutePos] = next;
-        }
-        // clean trailing undefineds? keep full history (don't prune)
-        chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-        chapterObj.questions[i].attempts = full;
-        scheduleAutoSave();
-        renderTable(); // re-render to update dots
-      };
-
-      td.appendChild(sp);
-      tr.appendChild(td);
-    });
-
-    tbody.appendChild(tr);
-  }
-
-  renderStats();
-}
-
-/* -------------------------
-  Bulk actions & New Attempt
----------------------------*/
-function markAll(stateName){
-  if(!current.chapter) return;
-  const chapterObj = examData.subjects[current.subject][current.book][current.chapter];
-  for(const idxStr of Object.keys(chapterObj.questions || {})){
-    const idx = Number(idxStr);
-    chapterObj.questions[idx] = chapterObj.questions[idx] || { notes:'', attempts:[] };
-    // push new attempt at end (most recent)
-    chapterObj.questions[idx].attempts.push(stateName);
-  }
-  // ensure all question slots exist up to totalQuestions
-  for(let i=1;i<=chapterObj.totalQuestions;i++){
-    chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-    // mark current (most recent) slot to stateName
-    chapterObj.questions[i].attempts.push(stateName);
-  }
-  scheduleAutoSave();
-  renderTable();
-}
-
-function newAttemptForAll(){
-  if(!current.chapter) return;
-  const chapterObj = examData.subjects[current.subject][current.book][current.chapter];
-  for(let i=1;i<=chapterObj.totalQuestions;i++){
-    chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-    // push undefined to denote not attempted yet for new session
-    chapterObj.questions[i].attempts.push(undefined);
-  }
-  scheduleAutoSave();
-  renderTable();
-}
-
-/* -------------------------
-  Stats calculations
----------------------------*/
-function computeChapterStats(chObj){
-  let totalAttempts = 0, totalCorrect = 0, totalWrong = 0;
-  for(let i=1;i<= (chObj.totalQuestions||0); i++){
-    const q = chObj.questions[i] || { attempts:[] };
-    q.attempts.forEach(s=>{
-      if(s === 'correct') { totalCorrect++; totalAttempts++; }
-      else if(s === 'wrong') { totalWrong++; totalAttempts++; }
-      else if(s === 'not_attempted') { totalAttempts++; } // counts toward attempts but not correct
-    });
-  }
-  const accuracy = totalAttempts ? (totalCorrect / totalAttempts) * 100 : null;
-  return { totalAttempts, totalCorrect, totalWrong, accuracy };
-}
-
-function computeSubjectStats(subjectName){
-  const subject = examData.subjects[subjectName] || {};
-  let chapters = [];
-  for(const bookName of Object.keys(subject)){
-    for(const chName of Object.keys(subject[bookName])){
-      const ch = subject[bookName][chName];
-      const st = computeChapterStats(ch);
-      chapters.push({ book: bookName, chapter: chName, stats: st });
-    }
-  }
-  // aggregate
-  let totalAttempts=0,totalCorrect=0,totalWrong=0;
-  chapters.forEach(c=>{ totalAttempts += c.stats.totalAttempts; totalCorrect += c.stats.totalCorrect; totalWrong += c.stats.totalWrong; });
-  const accuracy = totalAttempts ? (totalCorrect/totalAttempts)*100 : null;
-  return { chapters, totalAttempts, totalCorrect, totalWrong, accuracy };
-}
-
-function renderStats(){
-  if(!current.chapter){ document.getElementById('chapterStats').innerHTML='No chapter loaded'; return; }
-  const chObj = examData.subjects[current.subject][current.book][current.chapter];
-  const chStats = computeChapterStats(chObj);
-  const chHtml = `
-    <div>Total attempts: <strong>${chStats.totalAttempts}</strong></div>
-    <div>Correct: <strong>${chStats.totalCorrect}</strong>, Wrong: <strong>${chStats.totalWrong}</strong></div>
-    <div>Accuracy: <strong>${chStats.accuracy===null? 'N/A' : chStats.accuracy.toFixed(1) + '%'}</strong></div>
-  `;
-  document.getElementById('chapterStats').innerHTML = chHtml;
-
-  // subject-level
-  const subjRes = computeSubjectStats(current.subject);
-  document.getElementById('subjectStats').innerHTML = `
-    <div>Total attempts: <strong>${subjRes.totalAttempts}</strong></div>
-    <div>Accuracy: <strong>${subjRes.accuracy===null? 'N/A' : subjRes.accuracy.toFixed(1)+'%'}</strong></div>
-  `;
-
-  // top/bottom 5 chapters by accuracy
-  const chapList = subjRes.chapters.filter(c=>c.stats.totalAttempts>0).map(c => ({ name: c.book + ' → ' + c.chapter, acc: c.stats.accuracy===null? -1 : c.stats.accuracy }));
-  chapList.sort((a,b)=>b.acc - a.acc);
-  const top5 = chapList.slice(0,5), bottom5 = chapList.slice().reverse().slice(0,5);
-
-  document.getElementById('top5').innerHTML = top5.length ? top5.map(x => `<div>${x.name} <span class="badge bg-success badge-small">${x.acc.toFixed(1)}%</span></div>`).join('') : '<div class="small text-muted">N/A</div>';
-  document.getElementById('bottom5').innerHTML = bottom5.length ? bottom5.map(x => `<div>${x.name} <span class="badge bg-danger badge-small">${x.acc.toFixed(1)}%</span></div>`).join('') : '<div class="small text-muted">N/A</div>';
-}
-
-/* -------------------------
-  Auto-save debounce
----------------------------*/
-function scheduleAutoSave(){
-  if(saveTimer) clearTimeout(saveTimer);
-  saveTimer = setTimeout(()=> { saveExamFile('Auto-save from QTracker'); }, 1200);
-}
-
-/* -------------------------
-  Export / Import
----------------------------*/
-document.getElementById('exportBtn').addEventListener('click', ()=>{
-  if(!current.exam){ alert('Choose and load an exam to export'); return; }
-  const dataStr = JSON.stringify(examData, null, 2);
-  const blob = new Blob([dataStr], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = current.exam + '.json'; a.click(); URL.revokeObjectURL(url);
-});
-
-document.getElementById('importBtn').addEventListener('click', ()=>{
-  const input = document.createElement('input'); input.type='file'; input.accept='application/json';
-  input.onchange = e => {
-    const file = e.target.files[0]; if(!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      try{
-        const parsed = JSON.parse(ev.target.result);
-        // ask user whether to replace current exam data or merge with existing
-        if(confirm('Replace current in-memory exam data with imported file? Click Cancel to merge by overwriting keys.')) {
-          examData = parsed; examData.__sha = null;
-        } else {
-          examData = Object.assign({}, examData, parsed);
-        }
-        populateSelectorsFromData();
-        renderTable();
-        log('Imported data (in-memory). Click Sync to save to GitHub.');
-      }catch(err){ alert('Invalid JSON'); }
-    };
-    reader.readAsText(file);
-  };
-  input.click();
-});
-
-/* -------------------------
-  Event wiring
----------------------------*/
-document.getElementById('openSettings').addEventListener('click', ()=>{
-  const m = new bootstrap.Modal(document.getElementById('settingsModal'));
-  document.getElementById('cfgOwner').value = cfg.owner || '';
-  document.getElementById('cfgRepo').value = cfg.repo || '';
-  document.getElementById('cfgPath').value = cfg.path || 'data';
-  document.getElementById('cfgBranch').value = cfg.branch || 'main';
-  document.getElementById('cfgToken').value = localStorage.getItem('qtracker_token') || '';
-  m.show();
-});
-
-document.getElementById('btnSaveSettings').addEventListener('click', ()=>{
-  cfg.owner = document.getElementById('cfgOwner').value.trim();
-  cfg.repo = document.getElementById('cfgRepo').value.trim();
-  cfg.path = document.getElementById('cfgPath').value.trim() || 'data';
-  cfg.branch = document.getElementById('cfgBranch').value.trim() || 'main';
-  saveCfgLocal(cfg);
-  const tok = document.getElementById('cfgToken').value.trim();
-  if(tok) localStorage.setItem('qtracker_token', tok);
-  document.querySelectorAll('.btn-close').forEach(b=>b.click());
-  log('Settings saved locally. Click Load exams.');
-});
-
-document.getElementById('btnLoadExams').addEventListener('click', ()=> loadExams());
-document.getElementById('btnInitExams').addEventListener('click', ()=> initExams());
-
-document.getElementById('examSelect').addEventListener('change', async (e)=>{
-  const ex = e.target.value;
-  if(!ex) return;
-  current.exam = ex;
-  // ensure exam in examsList
-  if(!examsList.includes(ex)) examsList.push(ex);
-  await loadExamFile(ex);
-  populateExamSelect(); // refresh list
-});
-
-document.getElementById('loadChapter').addEventListener('click', async ()=>{
-  const ex = document.getElementById('examSelect').value;
-  if(!ex) return alert('Choose exam');
-  current.exam = ex;
-  current.subject = document.getElementById('subjectSelect').value || '';
-  current.book = document.getElementById('bookSelect').value || '';
-  current.chapter = document.getElementById('chapterSelect').value || '';
-  // allow quick creation: let user type new subject/book/chapter by entering into selects? for now allow prompts
-  if(!current.subject || !current.book || !current.chapter) {
-    if(!current.subject) current.subject = prompt('Enter subject name (new or existing):') || '';
-    if(!current.book) current.book = prompt('Enter book name (new or existing):') || '';
-    if(!current.chapter) current.chapter = prompt('Enter chapter name:') || '';
-  }
-  if(!examData) await loadExamFile(current.exam);
-  if(!ensureCurrentChapterStructure()) return;
-  renderTable();
-});
-
-document.getElementById('markAllCorrect').addEventListener('click', ()=>{ // when clicking these, push a 'correct' for current session
-  if(!current.chapter) return;
-  const chapterObj = examData.subjects[current.subject][current.book][current.chapter];
-  for(let i=1;i<=chapterObj.totalQuestions;i++){
-    chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-    chapterObj.questions[i].attempts.push('correct');
-  }
-  scheduleAutoSave(); renderTable();
-});
-document.getElementById('markAllWrong').addEventListener('click', ()=>{ if(!current.chapter) return;
-  const chapterObj = examData.subjects[current.subject][current.book][current.chapter];
-  for(let i=1;i<=chapterObj.totalQuestions;i++){
-    chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-    chapterObj.questions[i].attempts.push('wrong');
-  }
-  scheduleAutoSave(); renderTable();
-});
-document.getElementById('markAllNA').addEventListener('click', ()=>{ if(!current.chapter) return;
-  const chapterObj = examData.subjects[current.subject][current.book][current.chapter];
-  for(let i=1;i<=chapterObj.totalQuestions;i++){
-    chapterObj.questions[i] = chapterObj.questions[i] || { notes:'', attempts:[] };
-    chapterObj.questions[i].attempts.push('not_attempted');
-  }
-  scheduleAutoSave(); renderTable();
-});
-document.getElementById('newAttempt').addEventListener('click', ()=>{ if(!current.chapter) return; newAttemptForAll(); });
-
-document.getElementById('syncBtn').addEventListener('click', async ()=>{
-  // ensure exams.json has current exam name
-  if(current.exam && !examsList.includes(current.exam)) examsList.push(current.exam);
-  // save exams.json
-  try{
-    // get sha if exists
-    const token = localStorage.getItem('qtracker_token');
-    if(!token) return alert('Paste PAT in Settings first');
-    // read exams.json
-    let sha = null;
-    const getRes = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}/exams.json?ref=${cfg.branch}`, { headers:{ 'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'} });
-    if(getRes.status===200){ const j = await getRes.json(); sha = j.sha; }
-    const content = JSON.stringify({ exams: examsList }, null, 2);
-    const putRes = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}/exams.json`, {
-      method:'PUT',
-      headers:{ 'Authorization':'token '+token, 'Accept':'application/vnd.github.v3+json'},
-      body: JSON.stringify({ message: 'Update exams.json by QTracker', content: btoa(unescape(encodeURIComponent(content))), sha: sha, branch: cfg.branch })
-    });
-    if(putRes.status===201 || putRes.status===200) log('Updated exams.json'); else log('Failed to update exams.json');
-  }catch(err){ log('Sync exams.json failed: '+err.message); }
-
-  // save current exam file
-  if(current.exam && examData){
-    try{ await saveExamFile('Manual sync from QTracker'); } catch(e){ log('Save exam failed: '+e.message); }
-  }
-});
-
-/* -------------------------
-  startup
----------------------------*/
-function consolesafe(e){ try{ console.log(e); }catch(_){} }
-(function init(){
-  // load cfg from storage to local var
-  const local = loadCfg();
-  cfg = Object.assign(DEFAULT_CFG, local);
-  // apply token if exists
-  const token = localStorage.getItem('qtracker_token') || '';
-  // initial UI
-  populateExamSelect();
-  // try to auto-load exams.json if cfg is set and token present
-  if(cfg.owner && cfg.repo && token) loadExams();
-  log('Ready. Open Settings to configure GitHub.');
-})();
-</script>
+<script src="/assets/js/main.js"></script>
 </body>
 </html>
