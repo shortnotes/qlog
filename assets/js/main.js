@@ -386,6 +386,8 @@ document.getElementById('examSelect').addEventListener('change', async (e)=>{
   if(!examsList.includes(ex)) examsList.push(ex);
   await loadExamFile(ex);
   populateExamSelect();
+  document.getElementById('examSelect').value = ex; // <-- keep selection after reload
+
 });
 
 document.getElementById('btnAddExam').addEventListener('click', ()=>{
