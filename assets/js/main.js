@@ -173,6 +173,7 @@ function renderTable(){
     const tr = document.createElement('tr');
     const tdNum = document.createElement('td'); tdNum.textContent = i; tr.appendChild(tdNum);
 
+    // Notes cell
     const tdNotes = document.createElement('td'); tdNotes.className='notes-cell';
     const ta = document.createElement('textarea'); ta.className='form-control form-control-sm'; ta.style.minHeight='56px'; ta.value = q.notes || '';
     ta.addEventListener('input', ()=> {
@@ -181,54 +182,62 @@ function renderTable(){
         chObj.questions = chObj.questions || {};
         chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
         chObj.questions[i].notes = ta.value;
-        // scheduleSave();
       }, noteDebounce);
     });
     tdNotes.appendChild(ta);
     tr.appendChild(tdNotes);
 
-    const arr = lastN(q.attempts || []);
-    arr.forEach((st, idx)=>{
-      const td = document.createElement('td'); td.className='text-center';
-      const sp = document.createElement('span'); sp.className='dot';
-      const state = st || 'no_data';
-      if(state==='correct') sp.classList.add('dot-green');
-      else if(state==='wrong') sp.classList.add('dot-red');
-      else if(state==='not_attempted') sp.classList.add('dot-yellow');
+    // Attempts cell (inline circles)
+    const tdAttempts = document.createElement('td');
+    tdAttempts.colSpan = 3;
+    tdAttempts.className = 'text-center';
+
+    // Show up to last 3 past attempts (read-only)
+    const attempts = q.attempts || [];
+    const pastAttempts = attempts.length > 1 ? attempts.slice(-Math.min(3, attempts.length - 1)) : [];
+    pastAttempts.forEach(st => {
+      const sp = document.createElement('span');
+      sp.className = 'dot mx-1';
+      if(st==='correct') sp.classList.add('dot-green');
+      else if(st==='wrong') sp.classList.add('dot-red');
+      else if(st==='not_attempted') sp.classList.add('dot-yellow');
       else sp.classList.add('dot-gray');
-
-      sp.title = state;
-      sp.onclick = ()=>{
-        // toggle order: no_data -> correct -> wrong -> not_attempted -> no_data
-        const states = ['no_data','correct','wrong','not_attempted'];
-        const tail = (q.attempts || []).slice(-LASTN);
-        const cur = tail[idx] === undefined ? 'no_data' : tail[idx];
-        const curIdx = states.indexOf(cur);
-        const next = states[(curIdx + 1) % states.length];
-        // compute absolute position in full attempts
-        const full = q.attempts || [];
-        const absolutePos = full.length - tail.length + idx;
-        if(next === 'no_data'){
-          if(absolutePos >= 0 && absolutePos < full.length) full[absolutePos] = undefined;
-        } else {
-          if(absolutePos < 0){
-            // pad at start
-            const pad = Array(Math.abs(absolutePos)).fill(undefined);
-            full.unshift(...pad);
-          }
-          full[absolutePos] = next;
-        }
-        chObj.questions = chObj.questions || {};
-        chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
-        chObj.questions[i].attempts = full;
-        // scheduleSave();
-        renderTable();
-      };
-
-      td.appendChild(sp);
-      tr.appendChild(td);
+      sp.title = st || 'no_data';
+      sp.style.opacity = '0.6'; // visually indicate read-only
+      tdAttempts.appendChild(sp);
     });
 
+    // Current attempt (interactive)
+    const currentAttemptIdx = attempts.length - 1;
+    let currentState = attempts.length ? attempts[currentAttemptIdx] : undefined;
+    const spCurrent = document.createElement('span');
+    spCurrent.className = 'dot mx-1';
+    if(currentState==='correct') spCurrent.classList.add('dot-green');
+    else if(currentState==='wrong') spCurrent.classList.add('dot-red');
+    else if(currentState==='not_attempted') spCurrent.classList.add('dot-yellow');
+    else spCurrent.classList.add('dot-gray');
+    spCurrent.title = currentState || 'no_data';
+    spCurrent.style.border = '2px solid #333'; // highlight current
+    spCurrent.style.cursor = 'pointer';
+
+    spCurrent.onclick = ()=>{
+      // toggle order: no_data -> correct -> wrong -> not_attempted -> no_data
+      const states = ['no_data','correct','wrong','not_attempted'];
+      const cur = currentState || 'no_data';
+      const curIdx = states.indexOf(cur);
+      const next = states[(curIdx + 1) % states.length];
+      chObj.questions = chObj.questions || {};
+      chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
+      if(attempts.length === 0) {
+        chObj.questions[i].attempts.push(next === 'no_data' ? undefined : next);
+      } else {
+        chObj.questions[i].attempts[currentAttemptIdx] = next === 'no_data' ? undefined : next;
+      }
+      renderTable();
+    };
+    tdAttempts.appendChild(spCurrent);
+
+    tr.appendChild(tdAttempts);
     tbody.appendChild(tr);
   }
 }
@@ -386,7 +395,7 @@ document.getElementById('examSelect').addEventListener('change', async (e)=>{
   if(!examsList.includes(ex)) examsList.push(ex);
   await loadExamFile(ex);
   populateExamSelect();
-  document.getElementById('examSelect').value = ex; // <-- keep selection after reload
+document.getElementById('examSelect').value = ex; // <-- keep selection after reload
 
 });
 
