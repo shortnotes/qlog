@@ -247,7 +247,7 @@ function markAll(state){
     chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
     chObj.questions[i].attempts.push(state);
   }
-  // scheduleSave(); 
+//   scheduleSave(); 
   renderTable();
 }
 
@@ -259,7 +259,7 @@ function newAttemptAll(){
     chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
     chObj.questions[i].attempts.push(undefined);
   }
-  // scheduleSave(); 
+//   scheduleSave(); 
   renderTable();
 }
 
@@ -404,18 +404,26 @@ document.getElementById('btnAddSubject').addEventListener('click', ()=> {
 
 document.getElementById('btnAddBook').addEventListener('click', ()=> {
   if(!examData) examData={subjects:{}};
-  const subj = prompt('Enter subject for this book (existing or new):'); if(!subj) return;
+  // Use selected subject if available
+  const subj = document.getElementById('subjectSelect').value || current.subject || prompt('Enter subject for this book (existing or new):');
+  if(!subj) return;
   if(!examData.subjects[subj]) examData.subjects[subj] = {};
   const book = prompt('Enter book name:'); if(!book) return;
   examData.subjects[subj][book] = examData.subjects[subj][book] || {};
+  // Set current subject and book for convenience
+  current.subject = subj;
+  current.book = book;
   populateSelectorsFromData();
 });
 
 document.getElementById('btnAddChapter').addEventListener('click', ()=> {
   if(!examData) examData={subjects:{}};
-  const subj = prompt('Enter subject (existing or new):'); if(!subj) return;
+  // Use selected subject and book if available
+  const subj = document.getElementById('subjectSelect').value || current.subject || prompt('Enter subject (existing or new):');
+  if(!subj) return;
   if(!examData.subjects[subj]) examData.subjects[subj] = {};
-  const book = prompt('Enter book (existing or new):'); if(!book) return;
+  const book = document.getElementById('bookSelect').value || current.book || prompt('Enter book (existing or new):');
+  if(!book) return;
   if(!examData.subjects[subj][book]) examData.subjects[subj][book] = {};
   const chapter = prompt('Enter chapter name:'); if(!chapter) return;
   if(!examData.subjects[subj][book][chapter]){
@@ -423,6 +431,10 @@ document.getElementById('btnAddChapter').addEventListener('click', ()=> {
     const n = parseInt(tq); if(isNaN(n) || n<=0){ alert('Invalid number'); return; }
     examData.subjects[subj][book][chapter] = { totalQuestions: n, questions: {} };
   }
+  // Set current subject, book, chapter for convenience
+  current.subject = subj;
+  current.book = book;
+  current.chapter = chapter;
   populateSelectorsFromData();
 });
 
