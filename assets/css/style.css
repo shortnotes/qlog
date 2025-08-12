@@ -1,0 +1,58 @@
+body {
+    background: #f5f7fb;
+    font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
+
+.dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: inline-block;
+    cursor: pointer;
+    margin: 0 4px;
+}
+
+.dot-green {
+    background: #28a745;
+}
+
+.dot-red {
+    background: #dc3545;
+}
+
+.dot-yellow {
+    background: #ffc107;
+}
+
+.dot-gray {
+    background: #6c757d;
+}
+
+.notes-cell {
+    min-width: 220px;
+    max-width: 400px;
+}
+
+.sidebar {
+    max-height: 70vh;
+    overflow: auto;
+}
+
+.table-wrap {
+    max-height: 60vh;
+    overflow: auto;
+}
+
+pre.small {
+    font-size: 0.85rem;
+}
+
+.badge-small {
+    font-size: 0.75rem;
+    padding: 0.35em 0.45em;
+}
+
+.muted-small {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
