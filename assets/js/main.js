@@ -181,7 +181,7 @@ function renderTable(){
         chObj.questions = chObj.questions || {};
         chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
         chObj.questions[i].notes = ta.value;
-        scheduleSave();
+        // scheduleSave();
       }, noteDebounce);
     });
     tdNotes.appendChild(ta);
@@ -221,7 +221,7 @@ function renderTable(){
         chObj.questions = chObj.questions || {};
         chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
         chObj.questions[i].attempts = full;
-        scheduleSave();
+        // scheduleSave();
         renderTable();
       };
 
@@ -234,10 +234,10 @@ function renderTable(){
 }
 
 /* ========== Actions: mark all / new attempt / add nodes ========== */
-function scheduleSave(){
-  if(autosaveTimer) clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(()=> saveExamFile('Auto-save from QTracker'), 1200);
-}
+// function scheduleSave(){
+//   if(autosaveTimer) clearTimeout(autosaveTimer);
+//   autosaveTimer = setTimeout(()=> saveExamFile('Auto-save from QTracker'), 1200);
+// }
 
 function markAll(state){
   if(!current.chapter) return;
@@ -247,7 +247,8 @@ function markAll(state){
     chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
     chObj.questions[i].attempts.push(state);
   }
-  scheduleSave(); renderTable();
+  // scheduleSave(); 
+  renderTable();
 }
 
 function newAttemptAll(){
@@ -258,7 +259,8 @@ function newAttemptAll(){
     chObj.questions[i] = chObj.questions[i] || { notes:'', attempts:[] };
     chObj.questions[i].attempts.push(undefined);
   }
-  scheduleSave(); renderTable();
+  // scheduleSave(); 
+  renderTable();
 }
 
 /* ========== Stats computation (only when button clicked) ========== */
